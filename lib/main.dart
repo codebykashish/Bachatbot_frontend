@@ -3,15 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/onboarding_screen.dart';
-import 'api_service.dart';
+import 'screens/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -20,9 +16,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AuthWrapper(),
+      title: 'BachatBot',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2DBE7F)),
+        useMaterial3: true,
+      ),
+      home: const AuthWrapper(),
     );
   }
 }
@@ -37,87 +38,17 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: Color(0xFF2DBE7F),
+            body: Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
           );
         }
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const LoginScreen();
+        if (snapshot.hasData && snapshot.data != null) {
+          return const MainScreen();
         }
-        return const ProfileChecker();
+        return const LoginScreen();
       },
-    );
-  }
-}
-
-class ProfileChecker extends StatefulWidget {
-  const ProfileChecker({super.key});
-
-  @override
-  State<ProfileChecker> createState() => _ProfileCheckerState();
-}
-
-class _ProfileCheckerState extends State<ProfileChecker> {
-  @override
-  void initState() {
-    super.initState();
-    checkProfile();
-  }
-
-  Future<void> checkProfile() async {
-    print("=== PROFILE CHECK STARTED ===");
-
-    try {
-      print("Calling GET /profile...");
-      final response = await ApiService.get("/profile");
-      print("PROFILE RESPONSE SUCCESS: $response");
-
-      final onboarding = response['data']['onboarding'] ?? {};
-      final isCompleted = onboarding['isCompleted'] ?? false;
-
-      print("ONBOARDING COMPLETED: $isCompleted");
-
-      if (!mounted) return;
-
-      if (isCompleted) {
-        print("Navigating to HomeScreen");
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const HomeScreen()));
-      } else {
-        print("Navigating to OnboardingScreen");
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const OnboardingScreen()));
-      }
-    } catch (e) {
-      print("=== PROFILE CHECK ERROR: $e ===");
-
-      if (!mounted) return;
-
-      // ✅ ALWAYS GO TO HOME SCREEN (even on error)
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Backend unavailable. Home screen loaded. Error: $e"),
-          backgroundColor: Colors.orange,
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 20),
-            Text("Loading profile..."),
-          ],
-        ),
-      ),
     );
   }
 }
