@@ -6,6 +6,7 @@ import '../api_service.dart';
 import 'categories_screen.dart';
 
 // State is public so MainScreen can call refresh() via GlobalKey
+// refresh
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
